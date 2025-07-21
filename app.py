@@ -1,30 +1,13 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import fitz  # PyMuPDF
 import openai
-
-# --- WARNING: Hardcoding API keys is insecure in production ---
 import os
+
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 CORS(app)
-
-HTML_TEMPLATE = """
-<!doctype html>
-<html>
-<head><title>Upload PDF to Generate Blog</title></head>
-<body>
-  <h2>Upload PDF to Generate Blog</h2>
-  <form action="/generate" method="post" enctype="multipart/form-data">
-    <input type="file" name="pdf_file" required>
-    <input type="submit" value="Generate Blog">
-  </form>
-  <h3>Blog Output:</h3>
-  <div style="white-space: pre-wrap; border: 1px solid gray; padding: 10px;">{{ blog }}</div>
-</body>
-</html>
-"""
 
 def extract_text_from_pdf(file_stream):
     pdf_doc = fitz.open(stream=file_stream.read(), filetype="pdf")
@@ -50,7 +33,7 @@ def call_gpt(prompt):
 
 @app.route('/', methods=['GET'])
 def home():
-    return render_template_string(HTML_TEMPLATE, blog="")
+    return "API is running. Use POST /generate with PDF upload."
 
 @app.route('/generate', methods=['POST'])
 def generate_blog():
@@ -64,11 +47,10 @@ def generate_blog():
     try:
         raw_text = extract_text_from_pdf(pdf_file)
         blog_output = call_gpt(raw_text)
-        return render_template_string(HTML_TEMPLATE, blog=blog_output)
+        return jsonify({"blog": blog_output})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-      
+
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
