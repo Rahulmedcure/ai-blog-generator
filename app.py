@@ -3,7 +3,7 @@ from flask_cors import CORS
 import fitz  # PyMuPDF
 import openai
 
-# Your actual OpenAI API key
+# --- WARNING: Hardcoding API keys is insecure in production ---
 import os
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -61,18 +61,12 @@ def generate_blog():
     if pdf_file.filename == '':
         return jsonify({"error": "Empty filename"}), 400
 
-    raw_text = extract_text_from_pdf(pdf_file)
-    blog_content = call_gpt(raw_text)
-
-    if blog_content.startswith("Error calling OpenAI API:"):
-        return render_template_string(HTML_TEMPLATE, blog=blog_content), 500
-
-    return render_template_string(HTML_TEMPLATE, blog=blog_content)
+    try:
+        raw_text = extract_text_from_pdf(pdf_file)
+        blog_output = call_gpt(raw_text)
+        return render_template_string(HTML_TEMPLATE, blog=blog_output)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-import os
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
