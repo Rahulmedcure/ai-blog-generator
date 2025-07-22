@@ -8,7 +8,12 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
 app = Flask(__name__)
-CORS(app)
+
+# Allow CORS only for your WordPress domain(s)
+CORS(app, origins=[
+    "https://travelfarecompare.com",
+    "https://www.travelfarecompare.com"
+])
 
 def extract_text_from_pdf(file_stream):
     pdf_doc = fitz.open(stream=file_stream.read(), filetype="pdf")
