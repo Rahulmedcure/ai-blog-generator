@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import fitz  # PyMuPDF
-import openai
 import os
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=openai_api_key)
 
 app = Flask(__name__)
 CORS(app)
@@ -18,7 +19,7 @@ def extract_text_from_pdf(file_stream):
 
 def call_gpt(prompt):
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a blog writer. Write a human-friendly blog from the given PDF text."},
@@ -27,7 +28,7 @@ def call_gpt(prompt):
             temperature=0.7,
             max_tokens=800
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
     except Exception as e:
         return f"Error calling OpenAI API:\n\n{str(e)}"
 
